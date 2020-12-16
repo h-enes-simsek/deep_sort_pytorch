@@ -11,3 +11,6 @@ build/
 *.avi
 *.so
 *.txt
+
+#resim klasoru
+**/pytorch
