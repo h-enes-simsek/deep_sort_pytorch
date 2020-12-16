@@ -181,7 +181,7 @@ def lr_decay():
         print("Learning rate adjusted to {}".format(lr))
 
 def main():
-    for epoch in range(start_epoch,2):
+    for epoch in range(start_epoch,40):
         train_loss, train_err = train(epoch)
         test_loss, test_err = test(epoch)
         draw_curve(epoch, train_loss, train_err, test_loss, test_err)
