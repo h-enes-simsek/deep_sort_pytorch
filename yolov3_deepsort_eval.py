@@ -33,7 +33,7 @@ def main(data_root='', seqs=('',), args=""):
         result_filename = os.path.join(result_root, '{}.txt'.format(seq))
         video_path = data_root+"/"+seq+"/video/video.mp4"
 
-        with VideoTracker(cfg, args, video_path, result_filename) as vdo_trk:
+        with VideoTracker(cfg, args, video_path) as vdo_trk:
             vdo_trk.run()
 
         # eval
@@ -70,6 +70,8 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
+    #orj kod:
+    """
     seqs_str = '''MOT16-02       
                   MOT16-04
                   MOT16-05
@@ -78,6 +80,9 @@ if __name__ == '__main__':
                   MOT16-11
                   MOT16-13
                   '''        
+    """
+    seqs_str = "MOT16-01 MOT16-02"
+    
     data_root = 'data/dataset/MOT16/train/'
 
     seqs = [seq.strip() for seq in seqs_str.split()]

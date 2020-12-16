@@ -119,8 +119,9 @@ class VideoTracker(object):
             "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
             """
 
-            # select person class 0-people 22-zebra
-            mask = (cls_ids == 20) + (cls_ids == 22)
+            # select person class 0-people 22-zebra 20-elephant
+            #mask = (cls_ids == 20) + (cls_ids == 22)
+            mask = (cls_ids == 0)
 
             bbox_xywh = bbox_xywh[mask]
             # bbox dilation just in case bbox too small, delete this line if using a better pedestrian detector

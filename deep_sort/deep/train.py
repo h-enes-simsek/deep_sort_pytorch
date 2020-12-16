@@ -8,7 +8,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torchvision
 
-from original_model import Net
+from model import Net
 
 parser = argparse.ArgumentParser(description="Train on market1501")
 parser.add_argument("--data-dir",default='data',type=str)
