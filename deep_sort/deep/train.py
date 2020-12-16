@@ -8,7 +8,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torchvision
 
-from model import Net
+from original_model import Net
 
 parser = argparse.ArgumentParser(description="Train on market1501")
 parser.add_argument("--data-dir",default='data',type=str)
@@ -26,8 +26,8 @@ if torch.cuda.is_available() and not args.no_cuda:
 
 # data loading
 root = args.data_dir
-train_dir = os.path.join(root,"train")
-test_dir = os.path.join(root,"test")
+train_dir = os.path.join(root,"pytorch/train")
+test_dir = os.path.join(root,"pytorch/val")
 transform_train = torchvision.transforms.Compose([
     torchvision.transforms.RandomCrop((128,64),padding=4),
     torchvision.transforms.RandomHorizontalFlip(),
@@ -39,6 +39,7 @@ transform_test = torchvision.transforms.Compose([
     torchvision.transforms.ToTensor(),
     torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
+print("TRAIN_DIR: "+train_dir) # YAZ
 trainloader = torch.utils.data.DataLoader(
     torchvision.datasets.ImageFolder(train_dir, transform=transform_train),
     batch_size=64,shuffle=True
@@ -48,6 +49,7 @@ testloader = torch.utils.data.DataLoader(
     batch_size=64,shuffle=True
 )
 num_classes = max(len(trainloader.dataset.classes), len(testloader.dataset.classes))
+print(trainloader.dataset.classes)
 
 # net definition
 start_epoch = 0
@@ -72,7 +74,7 @@ best_acc = 0.
 def train(epoch):
     print("\nEpoch : %d"%(epoch+1))
     net.train()
-    training_loss = 0.
+    training_loss = 0. 
     train_loss = 0.
     correct = 0
     total = 0
@@ -83,7 +85,9 @@ def train(epoch):
         inputs,labels = inputs.to(device),labels.to(device)
         outputs = net(inputs)
         loss = criterion(outputs, labels)
-
+        #print(loss)
+        #print(outputs)
+        #print(labels)
         # backward
         optimizer.zero_grad()
         loss.backward()
@@ -177,7 +181,7 @@ def lr_decay():
         print("Learning rate adjusted to {}".format(lr))
 
 def main():
-    for epoch in range(start_epoch, start_epoch+40):
+    for epoch in range(start_epoch,2):
         train_loss, train_err = train(epoch)
         test_loss, test_err = test(epoch)
         draw_curve(epoch, train_loss, train_err, test_loss, test_err)

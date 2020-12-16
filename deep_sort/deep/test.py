@@ -20,8 +20,10 @@ if torch.cuda.is_available() and not args.no_cuda:
 
 # data loader
 root = args.data_dir
+
 query_dir = os.path.join(root,"query")
 gallery_dir = os.path.join(root,"gallery")
+
 transform = torchvision.transforms.Compose([
     torchvision.transforms.Resize((128,64)),
     torchvision.transforms.ToTensor(),
@@ -40,7 +42,9 @@ galleryloader = torch.utils.data.DataLoader(
 net = Net(reid=True)
 assert os.path.isfile("./checkpoint/ckpt.t7"), "Error: no checkpoint file found!"
 print('Loading from checkpoint/ckpt.t7')
-checkpoint = torch.load("./checkpoint/ckpt.t7")
+# orj: checkpoint = torch.load("./checkpoint/ckpt.t7", map_location=torch.device('cpu'))
+#ancak cuda'sız çalışması için yeni bir parametre eklenmeli
+checkpoint = torch.load("./checkpoint/ckpt.t7", map_location=torch.device('cpu'))
 net_dict = checkpoint['net_dict']
 net.load_state_dict(net_dict, strict=False)
 net.eval()

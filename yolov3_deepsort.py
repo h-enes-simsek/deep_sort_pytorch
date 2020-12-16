@@ -71,6 +71,24 @@ class VideoTracker(object):
     def __exit__(self, exc_type, exc_value, exc_traceback):
         if exc_type:
             print(exc_type, exc_value, exc_traceback)
+            
+    #deep_sort içindeki fonksiyon doğru çalışmadığı için düzenleyip buraya fonksiyon olarak yazdım.
+    #input: frame görüntüsü, xywh formatında bbox matrisi (shape=#ofDetections,4)
+    #output: xywh formatında matrisin xyxy formatında matris karşılığı
+    def my_xywh_to_xyxy(self,ori_img, bbox_xywh): 
+        x,y,w,h = bbox_xywh[:,0],bbox_xywh[:,1],bbox_xywh[:,2],bbox_xywh[:,3]
+        x = x.reshape((x.size,1))
+        y = y.reshape((y.size,1))
+        w = w.reshape((w.size,1))
+        h = h.reshape((h.size,1))
+        #ekranın boyutu alınıyor
+        height, width = ori_img.shape[:2]
+        x1 = np.maximum(np.int_(x-w/2),0)
+        x2 = np.minimum(np.int_(x+w/2),width-1)
+        y1 = np.maximum(np.int_(y-h/2),0)
+        y2 = np.minimum(np.int_(y+h/2),height-1)
+        arr = np.concatenate((x1,y1,x2,y2),axis=1)
+        return arr
 
     def run(self):
         results = []
@@ -85,10 +103,24 @@ class VideoTracker(object):
             im = cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB)
 
             # do detection
-            bbox_xywh, cls_conf, cls_ids = self.detector(im)
+            bbox_xywh, cls_conf, cls_ids = self.detector(im) #bbox_xywh, confidence, labels 
+            print(cls_ids)
+            
+            """
+            labels = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck",
+            "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench",
+            "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe",
+            "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard",
+            "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
+            "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana",
+            "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake",
+            "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse",
+            "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator",
+            "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
+            """
 
-            # select person class
-            mask = cls_ids == 0
+            # select person class 0-people 22-zebra
+            mask = (cls_ids == 20) + (cls_ids == 22)
 
             bbox_xywh = bbox_xywh[mask]
             # bbox dilation just in case bbox too small, delete this line if using a better pedestrian detector
@@ -103,13 +135,17 @@ class VideoTracker(object):
                 bbox_tlwh = []
                 bbox_xyxy = outputs[:, :4]
                 identities = outputs[:, -1]
+                
+                #detection'ları ekrana çizen kendi yazdığım kod
+                ori_im = draw_boxes(ori_im, self.my_xywh_to_xyxy(im,bbox_xywh)) 
+                
+                #doğru eşleşmeleri ekrana çizen orjinal kod
                 ori_im = draw_boxes(ori_im, bbox_xyxy, identities)
 
                 for bb_xyxy in bbox_xyxy:
                     bbox_tlwh.append(self.deepsort._xyxy_to_tlwh(bb_xyxy))
 
                 results.append((idx_frame - 1, bbox_tlwh, identities))
-
             end = time.time()
 
             if self.args.display:
@@ -141,6 +177,7 @@ def parse_args():
     parser.add_argument("--cpu", dest="use_cuda", action="store_false", default=True)
     parser.add_argument("--camera", action="store", dest="cam", type=int, default="-1")
     return parser.parse_args()
+    
 
 
 if __name__ == "__main__":
