@@ -32,6 +32,9 @@ transform_train = torchvision.transforms.Compose([
     torchvision.transforms.RandomCrop((128,64),padding=4),
     torchvision.transforms.RandomHorizontalFlip(),
     torchvision.transforms.ToTensor(),
+    #[ortalama,ortalama,ortalama],[standart sapma,standart sapma,standart sapma] 
+    #aşağıdaki kod her kanal için (rgb,en,boy) şunu hesaplıyor 
+    #en kanalı için: en = (en - en_ort) / en_std
     torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 transform_test = torchvision.transforms.Compose([
@@ -39,7 +42,6 @@ transform_test = torchvision.transforms.Compose([
     torchvision.transforms.ToTensor(),
     torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
-print("TRAIN_DIR: "+train_dir) # YAZ
 trainloader = torch.utils.data.DataLoader(
     torchvision.datasets.ImageFolder(train_dir, transform=transform_train),
     batch_size=64,shuffle=True
@@ -49,7 +51,12 @@ testloader = torch.utils.data.DataLoader(
     batch_size=64,shuffle=True
 )
 num_classes = max(len(trainloader.dataset.classes), len(testloader.dataset.classes))
-print(trainloader.dataset.classes)
+#print("trainloader.dataset.classes: ",trainloader.dataset.classes) #market1501 için 751 class (class isimleri 2'den 1500'e aralıklarla) 
+#print("testloader.dataset.classes: ",testloader.dataset.classes) #market1501 için 751 class (class isimleri 2'den 1500'e aralıklarla) 
+#print("number of classes: ",num_classes) #market1501 için 751
+#print(len(trainloader)) #191
+#print(len(testloader)) #12
+
 
 # net definition
 start_epoch = 0
@@ -63,10 +70,10 @@ if args.resume:
     net.load_state_dict(net_dict)
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
-net.to(device)
+net.to(device) #.to pytorch tensor.to, tensorlerin özelliklerini değiştirmek için kullanılıyor. mesela from int32 to int64, from cude to cpu
 
 # loss and optimizer
-criterion = torch.nn.CrossEntropyLoss()
+criterion = torch.nn.CrossEntropyLoss() #https://pytorch.org/docs/0.3.1/nn.html?highlight=crossentropyloss#torch.nn.CrossEntropyLoss
 optimizer = torch.optim.SGD(net.parameters(), args.lr, momentum=0.9, weight_decay=5e-4)
 best_acc = 0.
 
@@ -81,33 +88,66 @@ def train(epoch):
     interval = args.interval
     start = time.time()
     for idx, (inputs, labels) in enumerate(trainloader):
+        #print("idx: ",idx) #kaçıncı for döngüsü tespit etmek için
+        #print("\ninputs: ",inputs.shape) #shape = 64,3,128,64 (ilk 64 batch size) (3,126,64 image) market 1501 için
+        #ÇOK ÖNEMLİ, labellar klasör isimleri ile isimlendirilmiyor sırayla isimlendiriliyor. 0'dan 751'e
+        #print("\nlabels: ",labels) #inputların class labeli, shape = 64 (batch size) market 1501 için
         # forward
-        inputs,labels = inputs.to(device),labels.to(device)
-        outputs = net(inputs)
-        loss = criterion(outputs, labels)
-        #print(loss)
-        #print(outputs)
-        #print(labels)
+        inputs,labels = inputs.to(device),labels.to(device) #.to pytorch tensor.to, tensorlerin özelliklerini değiştirmek için kullanılıyor. mesela from int32 to int64, from cude to cpu
+        
+
+        outputs = net(inputs) #64,751 = #batch_size,#class_number ?????????GÖZDEN GEÇİR????????
+        #print("out: ",outputs[0,:].norm()) #SORUN: train esnasında çıkışın normu 1 değil?
+        loss = criterion(outputs, labels) #outputlar probability değil. loss, softmax(outputs) işlemini gerçekleştiriyor. https://stackoverflow.com/questions/49390842/cross-entropy-in-pytorch
+        print("loss: ",loss)
+        
+        #sadece cross entropinin doğru çalışıp çalışmadığını denetlemek için
+        #batch için loss değerleri toplanıp ortalaması hesaplanıyor
+        accumulate = 0;
+        m = torch.nn.Softmax(dim=1)
+        out = m(outputs)
+        #print(out.shape) #64,751
+        for i in range(64):
+            #print("label: ",labels[i]," - ",out[i,labels[i]]) 
+            #print(-1*torch.log(out[i,labels[i]] ))
+            accumulate += -1*torch.log(out[i,labels[i]] )
+        print(accumulate/64 == loss)
+        
+        
         # backward
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         # accumurating
-        training_loss += loss.item()
-        train_loss += loss.item()
-        correct += outputs.max(dim=1)[1].eq(labels).sum().item()
+        #loss.item() = loss (sadece tensorden float? a çevrilmiş.)
+        training_loss += loss.item() #training_loss, aslında interval için ortalama loss'u hesaplamak için kullanılıyor
+        #print("training_loss: ",loss.item())
+        train_loss += loss.item() #epoch için asıl loss
+
+        #outputs.max(dim=1) ile outputun içindeki her bir resim için (batch_size) en yüksek class ihtimaline sahip değeri seçiliyor
+        #input_max, input_indexes = torch.max(input, dim=1) max olan index değerleri yani classlar [1] ile seçilioyr, [0] ise max değerlere eşit.
+        #.eq ile seçili classlar ve olması gereken label classlar karşılaştırılıyor. sonuç true false olarak vectore yazılıyor.
+        #.sum().item() ile truelar 1 falseler 0 olarak toplanıyor.
+        correct += outputs.max(dim=1)[1].eq(labels).sum().item() 
+        print("correct: ",outputs.max(dim=1)[1] )
+        
+        #correct/total karşılaştırması için labelların büyüklüğü hesaplanıyor. batch_size a eşit olmalı, 64
         total += labels.size(0)
+        #print(labels.size(0))
+        
+        
 
         # print 
         if (idx+1)%interval == 0:
             end = time.time()
-            print("[progress:{:.1f}%]time:{:.2f}s Loss:{:.5f} Correct:{}/{} Acc:{:.3f}%".format(
+            print("[progress:{:.1f}%]time:{:.2f}s AverageLoss:{:.5f} Correct:{}/{} Acc:{:.3f}%".format(
                 100.*(idx+1)/len(trainloader), end-start, training_loss/interval, correct, total, 100.*correct/total
             ))
             training_loss = 0.
             start = time.time()
     
+
     return train_loss/len(trainloader), 1.- correct/total
 
 def test(epoch):

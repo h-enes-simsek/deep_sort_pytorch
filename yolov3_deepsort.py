@@ -101,6 +101,8 @@ class VideoTracker(object):
             start = time.time()
             _, ori_im = self.vdo.retrieve()
             im = cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB)
+            
+            #print(im.shape) #video_boyu,video_eni,3
 
             # do detection
             bbox_xywh, cls_conf, cls_ids = self.detector(im) #bbox_xywh, confidence, labels 
@@ -129,7 +131,7 @@ class VideoTracker(object):
             cls_conf = cls_conf[mask]
 
             # do tracking
-            outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
+            outputs = self.deepsort.update(bbox_xywh, cls_conf, im) #im.shape =  video_boyu,video_eni,3
 
             # draw boxes for visualization
             if len(outputs) > 0:
@@ -138,7 +140,7 @@ class VideoTracker(object):
                 identities = outputs[:, -1]
                 
                 #detection'ları ekrana çizen kendi yazdığım kod
-                ori_im = draw_boxes(ori_im, self.my_xywh_to_xyxy(im,bbox_xywh)) 
+                #ori_im = draw_boxes(ori_im, self.my_xywh_to_xyxy(im,bbox_xywh)) 
                 
                 #doğru eşleşmeleri ekrana çizen orjinal kod
                 ori_im = draw_boxes(ori_im, bbox_xyxy, identities)

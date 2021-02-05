@@ -18,12 +18,17 @@ class Extractor(object):
         self.size = (64, 128)
         self.norm = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            #[ortalama,ortalama,ortalama],[standart sapma,standart sapma,standart sapma] 
+            #aşağıdaki kod her kanal için (rgb,en,boy) şunu hesaplıyor 
+            #en kanalı için: en = (en - en_ort) / en_std
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]), 
         ])
         
 
 
     def _preprocess(self, im_crops):
+        #im_crops, yolov3 tarafından üretilmiş bbox ile video frame'den kesilmiş parçalar.
+        #kesilmiş parçaların boyutları farklı farklı
         """
         TODO:
             1. to float with scale from 0 to 1
@@ -33,7 +38,11 @@ class Extractor(object):
             4. normalize
         """
         def _resize(im, size):
-            return cv2.resize(im.astype(np.float32)/255., size)
+            #im.astype(np.float32) numpy işlemi float 32 ye çevirmek için
+            #pikseller 255'e bölünerek 0-1 arasına sıkıştırılıyor.
+            #resize için interpolation belirtilmemiş, bilinear interpolation default kullanılıyor.
+            #nihayetinde kesilmiş video parçası size=64,128 boyutuna getiriliyor.
+            return cv2.resize(im.astype(np.float32)/255., size) 
 
         im_batch = torch.cat([self.norm(_resize(im, self.size)).unsqueeze(0) for im in im_crops], dim=0).float()
         return im_batch
@@ -41,9 +50,11 @@ class Extractor(object):
 
     def __call__(self, im_crops):
         im_batch = self._preprocess(im_crops)
+        #print(im_batch.shape) #detection_number,3,128,64
         with torch.no_grad():
             im_batch = im_batch.to(self.device)
             features = self.net(im_batch)
+            #print(features.shape) #detection_number,512
         return features.cpu().numpy()
 
 

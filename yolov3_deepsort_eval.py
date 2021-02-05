@@ -81,7 +81,7 @@ if __name__ == '__main__':
                   MOT16-13
                   '''        
     """
-    seqs_str = "MOT16-01 MOT16-02"
+    seqs_str = "MOT16-01"
     
     data_root = 'data/dataset/MOT16/train/'
 

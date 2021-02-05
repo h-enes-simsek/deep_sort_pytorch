@@ -101,6 +101,9 @@ if __name__ == '__main__':
     net = Net(reid=True)
     x = torch.randn(4,3,128,64)
     y = net(x)
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
+    print(net) #alternatif bir model görme şekli torchsummarye göre
+    from torchsummary import summary
+    summary(net, (3,128,64))
 
 

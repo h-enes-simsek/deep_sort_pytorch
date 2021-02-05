@@ -8,7 +8,8 @@ import os
 from model import Net
 
 parser = argparse.ArgumentParser(description="Train on market1501")
-parser.add_argument("--data-dir",default='data',type=str)
+#orj: parser.add_argument("--data-dir",default='data',type=str)
+parser.add_argument("--data-dir",default='data/pytorch',type=str)
 parser.add_argument("--no-cuda",action="store_true")
 parser.add_argument("--gpu-id",default=0,type=int)
 args = parser.parse_args()
@@ -37,6 +38,10 @@ galleryloader = torch.utils.data.DataLoader(
     torchvision.datasets.ImageFolder(gallery_dir, transform=transform),
     batch_size=64, shuffle=False
 )
+#print(len(queryloader.dataset.classes)) #750 class (train_set_class=751'e eşit olmak zorunda değil. market 1501, 750+751=1501 adet class içeriyor.)
+#print(len(galleryloader.dataset.classes)) #752 class (fazla olan class 0 ve -1, bunlarda istenmeyen resimler var)
+#print(len(queryloader)) #53
+#print(len(galleryloader)) #509
 
 # net definition
 net = Net(reid=True)
@@ -47,7 +52,7 @@ print('Loading from checkpoint/ckpt.t7')
 checkpoint = torch.load("./checkpoint/ckpt.t7", map_location=torch.device('cpu'))
 net_dict = checkpoint['net_dict']
 net.load_state_dict(net_dict, strict=False)
-net.eval()
+net.eval() #dropout gibi optimizasyonları kapatmak için, net.train() ile geri açılıyor.
 net.to(device)
 
 # compute features
@@ -58,18 +63,27 @@ gallery_labels = torch.tensor([]).long()
 
 with torch.no_grad():
     for idx,(inputs,labels) in enumerate(queryloader):
+        #print(labels) #ÇOK ÖNEMLİ, labellar klasör isimlerine göre isimlendirilmiyor. index numarasına göre isimlendiriliyor.
         inputs = inputs.to(device)
-        features = net(inputs).cpu()
-        query_features = torch.cat((query_features, features), dim=0)
+        features = net(inputs).cpu() #64,512 = batch_size, ZQPei'nin orjinal olmayan modelindeki feature büyüklüğü
+        #print("features: ",features.shape)
+        query_features = torch.cat((query_features, features), dim=0) 
+        #print("query_features: ",query_features.shape) # 3368,512 = market 1501 deki query_image, feature
         query_labels = torch.cat((query_labels, labels))
+        #print("query_labels: ",query_labels.shape) #3367
 
     for idx,(inputs,labels) in enumerate(galleryloader):
+        #print(labels) #ÇOK ÖNEMLİ, labellar klasör isimlerine göre isimlendirilmiyor. index numarasına göre isimlendiriliyor.
         inputs = inputs.to(device)
         features = net(inputs).cpu()
         gallery_features = torch.cat((gallery_features, features), dim=0)
+        #print("gallery_features: ",gallery_features.shape) # 19732,512 = market 1501 deki test image, feature
         gallery_labels = torch.cat((gallery_labels, labels))
+        #print("gallery_labels: ",gallery_labels.shape) # 19732
 
-gallery_labels -= 2
+#MARKET 1501 gallery(test) verisetinde -1 ve 0 numaralı classları olduğu için sonuçlardan çıkarılıyor.
+#Aslında çıkarılmıyor, tüm classların labelı iki azaltılıyor. query içinde -1 ve 0 olmadığı için, gallery ve query labelları eşleşmiş oluyor.
+gallery_labels -= 2  #query_label = 0,0,0,1,1,.... iken gallery_label(işlem sonrası) = -2,-2,-2,-1,-1,0,0,0,1,1,1 ...
 
 # save features
 features = {

@@ -24,7 +24,7 @@ class DeepSort(object):
         self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
 
     def update(self, bbox_xywh, confidences, ori_img):
-        self.height, self.width = ori_img.shape[:2]
+        self.height, self.width = ori_img.shape[:2] #video frame'i
         # generate detections
         features = self._get_features(bbox_xywh, ori_img)
         bbox_tlwh = self._xywh_to_tlwh(bbox_xywh)
@@ -104,11 +104,14 @@ class DeepSort(object):
         return t,l,w,h
     
     def _get_features(self, bbox_xywh, ori_img):
+        #ori_img, video frame'inin tamamı
+        #print(bbox_xywh)
         im_crops = []
-        for box in bbox_xywh:
-            x1,y1,x2,y2 = self._xywh_to_xyxy(box)
-            im = ori_img[y1:y2,x1:x2]
-            im_crops.append(im)
+        for box in bbox_xywh: #yolov3 tarafından üretilmiş bbox
+            x1,y1,x2,y2 = self._xywh_to_xyxy(box) #x1,y1,en,boy 'dan x1,y1,x2,y2 'ye
+            im = ori_img[y1:y2,x1:x2] #tüm frame'den bbox ile seçilmiş kısmı alınıyor, rgb kanalı default seçiliyor.
+            #print(im == im_sil ) #boy,en,3
+            im_crops.append(im) 
         if im_crops:
             features = self.extractor(im_crops)
         else:
