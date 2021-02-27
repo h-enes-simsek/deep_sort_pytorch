@@ -1,0 +1,1 @@
+2 ve 11. videoda case 2 drumunda VE 13. video case 4 durumunda hiç yanlış eşleşme yapılmadığı için grafikleri hesaplanmadı. (top1 acc=100 olanlar)

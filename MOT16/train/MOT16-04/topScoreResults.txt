@@ -1,0 +1,17 @@
+Acc top1:1.000
+Avg top1:  tensor(0.9967)
+Acc top2:0.000
+Avg top2:  tensor(0.8792)
+toplam eşleşme:  11094
+
+Acc top1:1.000
+Avg top1:  tensor(0.9966)
+Acc top2:0.000
+Avg top2:  tensor(0.8794)
+toplam eşleşme:  14316
+
+Acc top1:1.000
+Avg top1:  tensor(0.9970)
+Acc top2:0.000
+Avg top2:  tensor(0.9108)
+toplam eşleşme:  47474

@@ -1,0 +1,54 @@
+Tüm videolar üzerinde mot skorları Pei'nin Market1501 üzerinde eğittiği re-id network ile hesaplandı.
+
+*results.avi (output video) ve results.txt (output detection) her video'nun klasöründe bulunuyor.
+*Bu dosyaları yolov3_deepsort.py üretiyor ancak üretilecek dosyaların konumunu yolov3_deepsort_eval.py tanımlıyor.
+*yolov3_deepsort_eval.py, results.txt ve .avi'ileri üretmeden sadece üretilmiş resultsX.txt dosyalarını okumak 
+için çalıştırılabilir. (video tracker yoruma alınmalı.)
+
+1. Sadece yayalar için hesaplanan skorlar
+results.avi ve results.txt dosyaları ve only_person_mot_scores(result).xlsx
+
+2. Hem yayalar hem de araçlar için hesaplanan skorlar
+result2.avi ve result2.txt dosyaları ve person_and_car_mot_scores(result2)
+
+3. Sadece araçlar için hesaplanan skorlar (sadece 4,5,10 ve 13. videolarda araç olduğu için bu videolar için hesaplandı.)
+result3.avi ve result3.txt dosyaları ve only_car_mot_scores(result3).xlsx
+
+**Yolonun farklı objeleri bulabilmesi için yolov3_deepsort.py içindeki mask değeri güncellenmeli.
+**gt.txt dosyasında araçlar ve insanlar için gt değerleri yer alsa da orjinal kodlarda sadece yayalar hesaba katılıyor.
+Eğer sadece araç ve araç+insan durumu için MOT skorları hesaplanmak isteniyorsa io.py dosyası içinde hangi değerlerin 
+gt'den alınacağı ile ilgili kısım güncellenmeli.
+
+###-------------------------------------
+topScores.txt dosyalarında ardışık iki frame içinde de bulunan objelerin benzerlik skorları yer alıyor.
+format: frame_idx, id, k, top1, top2, visiblity1, visiblity2
+
+*Sadece 1 objeden oluşan ardışık frameler için, top2 yerine -1 yazıldı.
+*Ardışık iki framede eğer hiç ortak obje bulunamadı ise o frame için bir bilgi yazılmadı.
+*en yüksek eşleşmenin doğru eşleşmeyi vermediği durumlarda k sayısı topk ifadesi içindeki k yi gösteriyor. 
+(Doğru eşleştiyse k=1). top1 aynı şekilde top1. ancak top2 yerine, olması gereken benzerlik skoru yazıldı.
+
+1. Sadece yayalar ve Visibility<0.3 durumu için sonuçlar
+topScores1.txt
+
+2. Sadece yayalar ve Visibility>0.3 ve Visibility<0.7
+topScores2.txt
+
+3. Sadece yayalar ve Visibility filtresi olmadan
+topScores3.txt
+
+4. Sadece araçlar ve Visibility filtresi olmadan
+topScores4.txt
+
+**Bu dosyaları kendi yazdığım evaluateCrops.py üretiyor. Hangi videodan, hangi durum için veri üretileceği 
+kodlardan değiştirilebilir. Ayrıca bu dosya, crops olarak üretilen resimleri eğer istenirse bir klasöre yazabilir.
+** Visibility>0.7 hesaplanmadı çünkü genelde accuracy 100% çıkıyor.
+
+Her klasördeki topScoreResults.txt dosyasını python üretmiyor. Hepsini ben oluşturdum. İçlerinde her durum için ortamala
+top1, top2 skorları, toplam eşleşme sayısı ve accuracy değerleri mevcut. 
+Bu değerleri evaluateCrops.py, en son ekrana yazdırıyor ancak txt'ye yazmıyor.
+
+****Yaptığım bir hatadan dolayı 20 Şubat 2021 gününden önce üretilen topScores dosylarında yanlış eşleşme durumu
+için k yerine sıfır yazılıyor.
+
+
