@@ -32,7 +32,11 @@ class DeepSort(object):
         
         #YAZDIĞIM YORUM
         #print(features)
+        
+        #print(detections[0].tlwh)
+        #print(detections[1].tlwh)
 
+        #non max supression, yolo'nun bir obje için birden fazla bbox bulması durumunda gereksizleri elimine eden process.
         # run on non-maximum supression
         boxes = np.array([d.tlwh for d in detections])
         scores = np.array([d.confidence for d in detections])

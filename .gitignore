@@ -10,7 +10,6 @@ build/
 *.mp4
 *.avi
 *.so
-*.txt
 
 #resim klasoru
 **/pytorch

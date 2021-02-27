@@ -22,6 +22,7 @@ class Evaluator(object):
         gt_filename = os.path.join(self.data_root, self.seq_name, 'gt', 'gt.txt')
         self.gt_frame_dict = read_results(gt_filename, self.data_type, is_gt=True)
         self.gt_ignore_frame_dict = read_results(gt_filename, self.data_type, is_ignore=True)
+        
 
     def reset_accumulator(self):
         self.acc = mm.MOTAccumulator(auto_id=True)

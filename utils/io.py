@@ -80,6 +80,53 @@ labels={'ped', ...			% 1
 };
 """
 
+#araçları tespit eden videoları skorlamak için
+#valid label ve ignore label düzenlenmeli
+#ayrıca mark == 0 kontrolü silinmeli. çünk gt'de yaya olmayan için is_ignore şeklinde ayrıca kontrol yapılıyor.
+"""
+def read_mot_results(filename, is_gt, is_ignore):
+    valid_labels = {1, 3}
+    ignore_labels = { 2, 7, 8, 12}
+    results_dict = dict()
+    if os.path.isfile(filename):
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                linelist = line.split(',')
+                if len(linelist) < 7:
+                    continue
+                fid = int(linelist[0])
+                if fid < 1:
+                    continue
+                results_dict.setdefault(fid, list())
+
+                if is_gt:
+                    if 'MOT16-' in filename or 'MOT17-' in filename:
+                        label = int(float(linelist[7]))
+                        mark = int(float(linelist[6]))
+                        if label not in valid_labels:
+                            continue
+                    score = 1
+                elif is_ignore:
+                    if 'MOT16-' in filename or 'MOT17-' in filename:
+                        label = int(float(linelist[7]))
+                        vis_ratio = float(linelist[8])
+                        if label not in ignore_labels and vis_ratio >= 0:
+                            continue
+                    else:
+                        continue
+                    score = 1
+                else:
+                    score = float(linelist[6])
+
+                tlwh = tuple(map(float, linelist[2:6]))
+                target_id = int(linelist[1])
+
+                results_dict[fid].append((tlwh, target_id, score))
+
+    return results_dict
+"""   
+    
+#orijinal kodlar, sadece yayalar için mot skorlarını bulmak için
 
 def read_mot_results(filename, is_gt, is_ignore):
     valid_labels = {1}

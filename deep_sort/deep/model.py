@@ -112,7 +112,7 @@ class Net(nn.Module):
         # B x 128
         if self.reid:
             x = x.div(x.norm(p=2,dim=1,keepdim=True)) #L2 normalization by dividing its length.
-            print(x.shape) #1,512
+            #print(x.shape) #1,512
             #show_last_feature(x)
             return x
         # classifier

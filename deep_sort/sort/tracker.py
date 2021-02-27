@@ -93,13 +93,16 @@ class Tracker:
     def _match(self, detections):
 
         def gated_metric(tracks, dets, track_indices, detection_indices):
+            #print(track_indices)
+            #print(detection_indices)
             features = np.array([dets[i].feature for i in detection_indices])
             targets = np.array([tracks[i].track_id for i in track_indices])
             cost_matrix = self.metric.distance(features, targets)
+            #print("A ", 1-cost_matrix) # cos benzerlik skoru (i=track, j=detection)
             cost_matrix = linear_assignment.gate_cost_matrix(
                 self.kf, cost_matrix, tracks, dets, track_indices,
                 detection_indices)
-
+            ##print("B ", cost_matrix) # cos benzerlik skoru (en düşük skorların dışındakiler 10^5 ile doldurulmuş.)
             return cost_matrix
 
         # Split track set into confirmed and unconfirmed tracks.
@@ -128,6 +131,7 @@ class Tracker:
 
         matches = matches_a + matches_b
         unmatched_tracks = list(set(unmatched_tracks_a + unmatched_tracks_b))
+
         return matches, unmatched_tracks, unmatched_detections
 
     def _initiate_track(self, detection):
